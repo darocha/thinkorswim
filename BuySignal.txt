@@ -1,0 +1,30 @@
+input signalOffsetFactor = 0.20;
+
+def signalOffset = Average(TrueRange(high, close, low), 9) * signalOffsetFactor;
+plot Data = hlc3;
+
+def triggerSell = If(If(close[-1] < high, 1, 0) and (hlc3[-2] < close[-1] or hlc3[-3] < close[-1]), 1, 0);
+
+def triggerBuy = If(If(close[-1] > low, 1, 0) and (hlc3[-2] > close[-1] or hlc3[-3] > close[-1]), 1, 0);
+
+rec buySellSwitch = If(triggerSell, 1, If(triggerBuy, 0, buySellSwitch[1]));
+
+def thirdBarClosed = If(IsNaN(hlc3[-3]), 0, 1);
+
+plot SBS = If(triggerSell and thirdBarClosed and !buySellSwitch[1], high + signalOffset, If(triggerBuy and thirdBarClosed and buySellSwitch[1], low - signalOffset, Double.NaN));
+
+SBS.SetStyle(Curve.FIRM);
+SBS.SetPaintingStrategy(PaintingStrategy.LINE_VS_POINTS);
+SBS.SetLineWeight(2);
+
+SBS.AssignValueColor(if triggerSell then
+if thirdBarClosed then
+#UpPos
+CreateColor(255, 0, 0) else
+#UpNeg
+CreateColor(255, 0, 0)
+else if triggerBuy then
+#DnPos
+CreateColor(0, 255, 0) else
+#DnNeg
+CreateColor(0, 255, 0));buy
