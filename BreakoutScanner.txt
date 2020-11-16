@@ -1,0 +1,58 @@
+# Filename: 30_min_Opening_Range_SCAN
+
+# source: 30 min opening range
+# original author: Robert Payne
+
+def OpenRangeMinutes = 30;
+def MarketOpenTime = 0930;
+input ShowTodayOnly = yes;
+input Limiter = 0.05;
+
+def Today = if GetDay() == GetLastDay() 
+            then 1 
+            else 0;
+                
+def FirstMinute = if SecondsFromTime(MarketOpenTime) < 60 
+                  then 1 
+                  else 0;
+                      
+def OpenRangeTime = if SecondsFromTime(MarketOpenTime) < 60 * OpenRangeMinutes 
+                    then 1 
+                    else 0;
+
+def ORHigh =  if FirstMinute 
+              then high 
+              else if OpenRangeTime and high > ORHigh[1] 
+                   then high 
+                   else ORHigh[1];
+                         
+def ORLow = if FirstMinute 
+            then low 
+            else if OpenRangeTime and low < ORLow[1] 
+                 then low 
+                 else ORLow[1];
+
+def OpenRangeHigh = if ShowTodayOnly and !Today 
+                    then Double.NaN 
+                    else if !OpenRangeTime 
+                         then ORHigh 
+                         else Double.NaN;
+                               
+def OpenRangeLow = if ShowTodayOnly and !Today 
+                   then Double.NaN 
+                   else if !OpenRangeTime 
+                        then ORLow 
+                        else Double.NaN;
+
+def PreviousRange = high[1] - low[1];
+def range = Average(PreviousRange, 10);
+
+def entryLine1 = OpenRangeHigh + (range * 0.06);
+def entryLine2 = OpenRangeLow - (range * 0.06);
+
+# Scan currently set to find Breakouts
+# Move Hashtag to Breakout plot to scan for Breakdowns
+# Limiter set by user (currently 5 percent)
+
+plot breakout = close > (entryline1 + (entryline1 * Limiter));
+#plot breakdown = close < (entryline2 - (entryline2 * Limiter));
